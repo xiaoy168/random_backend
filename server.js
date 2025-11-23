@@ -26,7 +26,6 @@ app.get('/', (req, res) => {
 
 // 上传接口：POST /upload
 app.post('/upload', (req, res) => {
-  // 把 multer 当成中间件手动调用，这样可以抓到错误
   upload.single('file')(req, res, (err) => {
     if (err) {
       console.error('Upload error:', err);
@@ -44,6 +43,30 @@ app.post('/upload', (req, res) => {
         error: 'No file uploaded',
       });
     }
+
+    try {
+      const base64 = req.file.buffer.toString('base64');
+      const id = Date.now().toString() + Math.random().toString(16).slice(2);
+
+      photos.push({
+        id,
+        userId,
+        base64,
+        filename: req.file.originalname,
+        uploadedAt: new Date().toISOString(),
+      });
+
+      res.json({ success: true, id });
+    } catch (e) {
+      console.error('Unexpected error in /upload:', e);
+      res.status(500).json({
+        success: false,
+        error: e.message || 'Server error',
+      });
+    }
+  });
+});
+
 
     try {
       const base64 = req.file.buffer.toString('base64');
@@ -86,3 +109,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Backend server running on port ${PORT}`);
 });
+
